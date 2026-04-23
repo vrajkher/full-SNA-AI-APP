@@ -1,0 +1,65 @@
+{
+  "name": "accotech-ai-desktop",
+  "productName": "Accotech AI",
+  "version": "1.0.0",
+  "description": "ACCOTECH AI – Tally Automation System (Windows desktop wrapper)",
+  "main": "main.js",
+  "author": {
+    "name": "Accotech",
+    "email": "support@accotech.ai"
+  },
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win --x64",
+    "build:dir": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "^31.4.0",
+    "electron-builder": "^25.0.5"
+  },
+  "build": {
+    "appId": "ai.accotech.tally",
+    "productName": "Accotech AI",
+    "artifactName": "Accotech AI Setup.${ext}",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "splash.html",
+      "../frontend/dist/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../backend",
+        "to": "backend",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/.pytest_cache/**",
+          "!tests/**",
+          "!**/*.pyc"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Accotech AI"
+    }
+  }
+}

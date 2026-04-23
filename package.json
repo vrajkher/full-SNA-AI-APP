@@ -1,0 +1,18 @@
+{
+  "name": "accotech-ai-tally-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ACCOTECH AI – Tally Automation System (Windows desktop)",
+  "workspaces": [
+    "frontend",
+    "electron"
+  ],
+  "scripts": {
+    "install:all": "npm --prefix frontend install && npm --prefix electron install && pip install -r backend/requirements.txt",
+    "dev:backend": "uvicorn app.main:app --reload --port 8000 --app-dir backend",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:electron": "npm --prefix electron start",
+    "build:frontend": "npm --prefix frontend run build",
+    "build:win": "npm run build:frontend && npm --prefix electron run build:win"
+  }
+}
