@@ -22,9 +22,25 @@ function resolveBackendPath() {
 function resolvePython() {
   if (process.env.ACCOTECH_PYTHON) return process.env.ACCOTECH_PYTHON;
   if (process.platform === "win32") {
-    const candidates = ["python", "py"];
-    return candidates[0];
+    const venv = path.join(
+      process.env.APPDATA || "",
+      "Accotech",
+      "venv",
+      "Scripts",
+      "python.exe"
+    );
+    if (venv && fs.existsSync(venv)) return venv;
+    return "python";
   }
+  const unixVenv = path.join(
+    process.env.HOME || "",
+    ".accotech",
+    "full-SNA-AI-APP",
+    ".venv",
+    "bin",
+    "python"
+  );
+  if (fs.existsSync(unixVenv)) return unixVenv;
   return "python3";
 }
 

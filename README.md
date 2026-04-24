@@ -4,6 +4,32 @@ AI-powered Windows desktop application that converts Excel/CSV accounting data
 into Tally Prime XML entries and pushes them directly into Tally via the
 XML HTTP interface (port 9000).
 
+## One-Click Install
+
+### Windows (double-click, no typing)
+Download the repo as a ZIP, extract, then **double-click `install.bat`**.
+It self-elevates, installs Python + Node + all dependencies, builds the UI,
+drops a Desktop shortcut, and launches the app.
+
+### Windows (one-line, PowerShell)
+```powershell
+iwr -useb https://raw.githubusercontent.com/vrajkher/full-sna-ai-app/claude/tally-automation-app-4nVx2/install.ps1 | iex
+```
+
+### macOS / Linux (one-line, bash)
+```bash
+curl -fsSL https://raw.githubusercontent.com/vrajkher/full-sna-ai-app/claude/tally-automation-app-4nVx2/install.sh | bash
+```
+
+### Or ship the NSIS installer
+```bash
+npm run build:win
+```
+Produces `electron/dist/Accotech AI Setup.exe`. It is now a **true one-click
+installer** (`oneClick: true`, `runAfterFinish: true`): double-click →
+Python is auto-installed via winget → backend venv is created →
+app launches. Zero prompts.
+
 ## Architecture
 
 ```
