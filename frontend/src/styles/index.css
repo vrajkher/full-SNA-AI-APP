@@ -256,6 +256,11 @@ code {
   justify-content: flex-end;
 }
 
+.actions .saved-path {
+  margin-top: 10px;
+  word-break: break-all;
+}
+
 .actions label {
   display: flex;
   flex-direction: column;

@@ -52,6 +52,21 @@ export async function getRunXml(runId) {
   return data;
 }
 
+export async function downloadRunXml(runId, filename = "voucher.xml") {
+  const response = await api.get(`/api/runs/${runId}/xml/download`, {
+    responseType: "blob",
+  });
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+  return true;
+}
+
 export async function getLearningState() {
   const { data } = await api.get("/api/learning");
   return data;

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { getRunXml } from "../services/api.js";
+import { downloadRunXml, getRunXml } from "../services/api.js";
 
 function StatusPanel({ run }) {
   const [xml, setXml] = useState(null);
@@ -72,9 +72,23 @@ function StatusPanel({ run }) {
 
       {run.xml && (
         <div className="xml-preview">
-          <button className="btn ghost" onClick={loadXml} disabled={loading}>
-            {loading ? "Loading…" : xml ? "Refresh XML" : "Show Generated XML"}
-          </button>
+          <div className="row">
+            <button className="btn ghost" onClick={loadXml} disabled={loading}>
+              {loading ? "Loading…" : xml ? "Refresh XML" : "Show Generated XML"}
+            </button>
+            <button
+              className="btn"
+              onClick={() =>
+                downloadRunXml(
+                  run.run_id,
+                  `voucher_${run.run_id.slice(0, 8)}.xml`
+                )
+              }
+              title="Save the generated XML to your computer"
+            >
+              Save XML
+            </button>
+          </div>
           {xml && <pre className="pre-scroll">{xml}</pre>}
         </div>
       )}

@@ -128,6 +128,12 @@ function App() {
                 <DataPreview preview={preview} />
               </section>
               <section className="card actions">
+                <h2>3. Generate &amp; Push</h2>
+                <p className="subtle">
+                  Step 1 — generate and save the Tally XML.
+                  Step 2 — push the saved XML to Tally Prime on
+                  <code> localhost:9000</code>.
+                </p>
                 <div className="row">
                   <label>
                     Bank Ledger (CR)
@@ -140,8 +146,13 @@ function App() {
                     className="btn primary"
                     disabled={processing || !preview?.clean_rows}
                     onClick={handleProcess}
+                    title="Run the full pipeline and save voucher_<id>.xml to data/outputs"
                   >
-                    {processing ? "Processing…" : "Process & Generate XML"}
+                    {processing
+                      ? "Generating…"
+                      : run?.xml
+                      ? "Re-generate & Save XML"
+                      : "Generate & Save XML"}
                   </button>
                   <button
                     className="btn success"
@@ -149,13 +160,18 @@ function App() {
                     onClick={handlePush}
                     title={
                       !run?.xml
-                        ? "Run Process first"
-                        : "POST XML to Tally at localhost:9000"
+                        ? "Generate XML first"
+                        : "POST saved XML to Tally at localhost:9000"
                     }
                   >
-                    {pushing ? "Pushing…" : "Push to Tally"}
+                    {pushing ? "Pushing to Tally…" : "Push to Tally"}
                   </button>
                 </div>
+                {run?.xml?.output_path && (
+                  <p className="subtle saved-path">
+                    XML saved: <code>{run.xml.output_path}</code>
+                  </p>
+                )}
               </section>
             </>
           )}
