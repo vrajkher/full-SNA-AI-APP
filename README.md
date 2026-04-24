@@ -191,3 +191,39 @@ Produces `dist/Accotech AI Setup.exe`.
 - Invalid settlement date
 - Tally connection failure
 - Non-success status rows
+
+## Troubleshooting
+
+### `metadata-generation-failed` while installing pandas
+
+```
+A full log can be found at …\meson-log.txt
+note: This error originates from a subprocess, and is likely not a problem with pip.
+error: metadata-generation-failed
+```
+
+**Cause:** pip couldn't find a pre-built wheel for your Python version and
+fell back to compiling pandas from source. On Windows that needs Visual
+C++ Build Tools, which aren't installed. This happens when a user already
+has **Python 3.13** on their machine but the pinned pandas version only
+ships wheels up to Python 3.12.
+
+**Fix (already applied on this branch):**
+
+1. `backend/requirements.txt` now uses `pandas>=2.2.3` which has wheels
+   for Python 3.13.
+2. `install.ps1` / `installer.nsh` always create the venv from
+   **Python 3.12 specifically** (via `py -3.12 -m venv`), regardless of
+   whatever Python is already on PATH.
+3. All three installers now call
+   `pip install --only-binary=:all: -r requirements.txt`, which refuses
+   source builds and fails fast with a clear message if a wheel is ever
+   missing — instead of silently trying to compile C extensions.
+
+**Manual fix if you hit this on an older checkout:**
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python -m pip install --upgrade pip wheel
+.\.venv\Scripts\python -m pip install --only-binary=:all: -r backend\requirements.txt
+```

@@ -31,16 +31,38 @@ function Ensure-Winget {
     }
 }
 
-function Ensure-Python {
-    if (Have "python") {
-        $ver = & python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
-        if ([version]$ver -ge [version]"3.10") { Okay "Python $ver detected"; return }
+function Find-Python312 {
+    # 1) py launcher is the most reliable locator on Windows
+    if (Have "py") {
+        $exe = (& py -3.12 -c "import sys; print(sys.executable)" 2>$null)
+        if ($LASTEXITCODE -eq 0 -and $exe) { return $exe.Trim() }
     }
+    # 2) common install paths from winget / python.org
+    $candidates = @(
+        "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe",
+        "$env:ProgramFiles\Python312\python.exe",
+        "${env:ProgramFiles(x86)}\Python312\python.exe"
+    )
+    foreach ($c in $candidates) { if (Test-Path $c) { return $c } }
+    return $null
+}
+
+function Ensure-Python312 {
+    # Backend wheels (pandas, numpy, lxml) have the widest coverage on 3.12.
+    # We always create the venv from 3.12 regardless of what's on PATH, so
+    # a user's pre-existing Python 3.13 won't trigger a source build.
+    $py = Find-Python312
+    if ($py) { Okay "Python 3.12 found at $py"; return $py }
+
     Info "Installing Python 3.12 via winget..."
     winget install --id Python.Python.3.12 -e --accept-package-agreements --accept-source-agreements -h | Out-Null
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
                 [System.Environment]::GetEnvironmentVariable("Path","User")
-    if (-not (Have "python")) { Fail "Python install did not expose 'python' on PATH. Open a fresh terminal and re-run." }
+
+    $py = Find-Python312
+    if (-not $py) { Fail "Python 3.12 install did not expose a python.exe. Open a fresh terminal and re-run." }
+    Okay "Python 3.12 installed at $py"
+    return $py
 }
 
 function Ensure-Node {
@@ -61,7 +83,7 @@ function Ensure-Git {
 }
 
 Ensure-Winget
-Ensure-Python
+$PythonExe = Ensure-Python312
 Ensure-Node
 Ensure-Git
 
@@ -85,12 +107,20 @@ if (Test-Path $RepoDir) {
 
 Push-Location $RepoDir
 try {
-    Info "Creating Python venv..."
-    if (-not (Test-Path ".venv")) { python -m venv .venv }
+    Info "Creating Python 3.12 venv from $PythonExe..."
+    if (-not (Test-Path ".venv")) { & $PythonExe -m venv .venv }
     $Py = Join-Path $RepoDir ".venv\Scripts\python.exe"
-    & $Py -m pip install --upgrade pip | Out-Null
-    Info "Installing backend requirements..."
-    & $Py -m pip install -r backend\requirements.txt
+    & $Py -m pip install --upgrade pip wheel setuptools | Out-Null
+    Info "Installing backend requirements (binary wheels only)..."
+    # --only-binary=:all: forces pip to refuse any source build.
+    # If a wheel is missing we want to fail fast with a clear message
+    # rather than try to compile C extensions on an end-user machine.
+    & $Py -m pip install --only-binary=:all: -r backend\requirements.txt
+    if ($LASTEXITCODE -ne 0) {
+        Warn "Binary-only install failed; retrying with default resolver (may compile from source)"
+        & $Py -m pip install -r backend\requirements.txt
+        if ($LASTEXITCODE -ne 0) { Fail "Backend requirements install failed." }
+    }
 
     Info "Installing frontend dependencies..."
     Push-Location frontend

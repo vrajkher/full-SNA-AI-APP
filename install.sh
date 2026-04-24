@@ -114,9 +114,14 @@ log "Creating Python venv..."
 [ -d .venv ] || python3 -m venv .venv
 # shellcheck disable=SC1091
 source .venv/bin/activate
-python -m pip install --upgrade pip >/dev/null
-log "Installing backend requirements..."
-python -m pip install -r backend/requirements.txt
+python -m pip install --upgrade pip wheel setuptools >/dev/null
+log "Installing backend requirements (binary wheels only)..."
+# Refuse source builds: fail fast with a clear message rather than
+# silently try to compile pandas / numpy / lxml on the user's machine.
+if ! python -m pip install --only-binary=:all: -r backend/requirements.txt; then
+    warn "Binary-only install failed; retrying with default resolver"
+    python -m pip install -r backend/requirements.txt
+fi
 
 log "Installing frontend dependencies..."
 ( cd frontend && npm install --no-audit --no-fund --loglevel=error )
