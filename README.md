@@ -194,6 +194,35 @@ Produces `dist/Accotech AI Setup.exe`.
 
 ## Troubleshooting
 
+### `py.exe : No suitable Python runtime found` during `install.ps1`
+
+```
+py.exe : No suitable Python runtime found
+    + CategoryInfo          : NotSpecified: ... [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+```
+
+**Cause:** PowerShell, with `$ErrorActionPreference = "Stop"` set, treats
+*any* stderr write from a native command as a terminating error. When the
+installer probes for Python 3.12 via `py -3.12`, the `py` launcher writes
+that message to stderr because 3.12 isn't installed yet — and PowerShell
+aborts before the script can run the `winget install` step that would
+actually install it.
+
+**Fix (already applied on this branch):** all native-command probes now
+run through an `Invoke-Quiet` helper that temporarily flips
+`$ErrorActionPreference` to `Continue`, captures stdout + stderr, and
+returns the exit code for an explicit check. The script also sets
+`$PSNativeCommandUseErrorActionPreference = $false` for PowerShell 7.3+
+and uses `Assert-ExitCode` for real-failure points (git clone, pip
+install, npm install/build).
+
+**Workaround if you hit this on an old copy of `install.ps1`:** install
+Python 3.12 manually first, then re-run the installer —
+```powershell
+winget install --id Python.Python.3.12 -e --accept-package-agreements --accept-source-agreements
+```
+
 ### `metadata-generation-failed` while installing pandas
 
 ```
